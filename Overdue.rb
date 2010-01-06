@@ -37,9 +37,15 @@ class Overdue
     page = Nokogiri::HTML(@agent.get('http://www.chipublib.org/mycpl/summary/#checkedOut').body)
     
     # Find the table containing checked-out books
-    page.xpath('/html/body/div/div[5]/div[2]/div[2]/div/div/table').each do |book|
-      pp book
-    end    
+    books = page.search("table[width='95%']").first.search('tr')
+    
+    # Shift off the first item with the table header in it
+    books.shift
+    
+    books.each do |book|
+      # title = book.children[2].content
+      # due date = book.children[6].content
+    end
   end
 
   def get_holds
