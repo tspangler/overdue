@@ -27,6 +27,10 @@ class Overdue
       !post_login.form_with(:action => '/mycpl/login/')
   end
   
+  def current_page
+    @agent.page.uri
+  end
+  
   def get_checked_out
     # Returns a hash of books checked out along with their due dates
     # Mechanize is based on Nokogiri so it inherits access to Nokogiri functions
@@ -42,7 +46,8 @@ class Overdue
     
   end
   
-  def locate_library
-    
+  def get_preferred_library
+    page = Nokogiri::HTML(@agent.get('http://www.chipublib.org/mycpl/').body)
+    page.css("a[title='Go to my preferred library.']").inner_html.strip
   end
 end
