@@ -3,6 +3,8 @@ require 'mechanize'
 require 'logger'
 
 class Overdue
+  attr_reader :checked_out
+  
   def initialize(card_number, zip)
     @card_number = card_number
     @zipcode = zip
@@ -10,6 +12,9 @@ class Overdue
       a.user_agent_alias = 'Windows IE 6' # lowest common denominator!
       a.log = Logger.new('chipublib.log')
     end
+    
+    @logged_in = false
+    @checked_out = []
   end
 
   def login
@@ -24,6 +29,7 @@ class Overdue
       
       # Return whether or not there's a login form. If there's not, it worked.
       # Since we're returning true on success, we need to invert the result before we return it.
+      @logged_in = true
       !post_login.form_with(:action => '/mycpl/login/')
   end
   
@@ -34,7 +40,7 @@ class Overdue
   def get_checked_out
     # Returns a hash of books checked out along with their due dates
     # Mechanize is based on Nokogiri so it inherits access to Nokogiri functions
-    page = Nokogiri::HTML(@agent.get('http://www.chipublib.org/mycpl/summary/#checkedOut').body)
+    page = Nokogiri::HTML(@agent.get('http://www.chipublib.org/mycpl/summary/').body)
     
     # Find the table containing checked-out books
     books = page.search("table[width='95%']").first.search('tr')
@@ -43,13 +49,36 @@ class Overdue
     books.shift
     
     books.each do |book|
+      @checked_out.push Hash['title' => book.children[2].content, 'due' => book.children[6].content]
       # title = book.children[2].content
       # due date = book.children[6].content
     end
+    
+    # Return the array of hashes
+    @checked_out    
   end
 
   def get_holds
     
+  end
+  
+  def due_soon(days)
+    # Returns a list of books due in the next x days
+    if @checked_out.empty?
+      return false
+    end
+    
+    due_soon = []
+    
+    @checked_out.each do |book|
+      due_in = (Date.parse(book['due']) - Date.today).to_i
+      
+      if due_in < days
+        due_soon.push Hash['title' => book['title'], 'due' => book['due'], 'due_in' => due_in]
+      end
+    end
+    
+    due_soon  
   end
   
   def get_preferred_library
