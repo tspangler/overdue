@@ -85,4 +85,34 @@ class Overdue
     page = Nokogiri::HTML(@agent.get('http://www.chipublib.org/mycpl/').body)
     page.css("a[title='Go to my preferred library.']").inner_html.strip
   end
+  
+  def catalog_search(term, type = 'keyword')
+    page = @agent.get('http://www.chipublib.org/search/catalog/')
+    search_form = page.form_with(:action => '/search/results/')
+    
+    search_form.terms = term
+    
+    results_page = Nokogiri::HTML(search_form.submit.body).search('ol.result li')
+    
+    results = []
+    # title
+    # media type
+    # author (if any)
+    # series
+    # published
+    # call no.
+    # language
+    # item_id
+    # image
+    
+    results_page.each do |result|
+      results.push Hash
+        [ 'title'  =>  result.inner_html,
+          'author' => ''
+        ]
+    end
+    
+    # Return the results hash
+    results
+  end
 end
