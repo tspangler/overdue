@@ -49,9 +49,7 @@ class Overdue
     books.shift
     
     books.each do |book|
-      @checked_out.push Hash['title' => book.children[2].content, 'due' => book.children[6].content]
-      # title = book.children[2].content
-      # due date = book.children[6].content
+      @checked_out.push Hash['title' => book.children[2].content, 'due' => book.children[6].content, 'renew_id' => book.children[8].inner_html.match(/[0-9]+/).to_s]
     end
     
     # Return the array of hashes
@@ -81,11 +79,21 @@ class Overdue
     due_soon  
   end
   
+  def renew(renew_id)
+    #   TODO: Check page body to validate renewal. On successful renewal, page will have a div like so:
+    #    <div id="checkedOutStatus" class="successMessage">
+    #    <p>This item has been successfully renewed.</p>
+    #    </div>
+
+    @agent.get("http://www.chipublib.org/mycpl/renew/item/R#{renew_id}/")
+  end
+  
   def get_preferred_library
     page = Nokogiri::HTML(@agent.get('http://www.chipublib.org/mycpl/').body)
     page.css("a[title='Go to my preferred library.']").inner_html.strip
   end
   
+  # TODO: finish!
   def catalog_search(term, type = 'keyword')
     page = @agent.get('http://www.chipublib.org/search/catalog/')
     search_form = page.form_with(:action => '/search/results/')
