@@ -85,7 +85,11 @@ class Overdue
     #    <p>This item has been successfully renewed.</p>
     #    </div>
 
-    @agent.get("http://www.chipublib.org/mycpl/renew/item/R#{renew_id}/")
+    renewal_page = Nokogiri::HTML(@agent.get("http://www.chipublib.org/mycpl/renew/item/R#{renew_id}/").body)
+
+    # If the element isn't found, it will return true to empty.
+    # If it's empty, we want to return false, so we return the inverse.
+    !renewal_page.css("div.successMessage").empty?
   end
   
   def get_preferred_library
