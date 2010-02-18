@@ -15,6 +15,7 @@ class Overdue
     
     @logged_in = false
     @checked_out = []
+    @overdue = []
   end
 
   def login
@@ -56,6 +57,19 @@ class Overdue
     @checked_out    
   end
 
+  def get_overdue
+    page = Nokogiri::HTML(@agent.get('http://www.chipublib.org/mycpl/summary/#overdues').body)
+    overdue_books_table = page.xpath("/html/body/div/div[5]/div[2]/div[2]/div/div[2]/table").first.search('tr')
+    overdue_books_table.shift
+    
+    overdue_books_table.each do |overdue_book|
+      @overdue.push Hash['title' => overdue_book.children[2].content, 'due' => overdue_book.children[6].content]
+    end
+    
+    @overdue
+  end
+
+
   def get_holds
     
   end
@@ -91,7 +105,7 @@ class Overdue
     # If it's empty, we want to return false, so we return the inverse.
     !renewal_page.css("div.successMessage").empty?
   end
-  
+    
   def get_preferred_library
     page = Nokogiri::HTML(@agent.get('http://www.chipublib.org/mycpl/').body)
     page.css("a[title='Go to my preferred library.']").inner_html.strip
